@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management System</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        if(!localStorage.getItem('auth_token')) {
+            window.location.href = '/login.html';
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                <h2>EduManage</h2>
+            </div>
+            <nav class="nav-menu">
+                <p class="nav-section-title">MAIN</p>
+                <a href="#" class="nav-item active" data-target="dashboard-view"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+                <a href="#" class="nav-item" data-target="classes-view"><i class="fa-solid fa-chalkboard-user"></i> Timetable</a>
+                <a href="#" class="nav-item" data-target="students-view"><i class="fa-solid fa-users"></i> Students</a>
+                <a href="#" class="nav-item" data-target="attendance-view"><i class="fa-solid fa-calendar-check"></i> Attendance</a>
+                
+                <p class="nav-section-title">ACADEMICS</p>
+                <a href="#" class="nav-item" data-target="class-summary-view"><i class="fa-solid fa-chart-bar"></i> Summaries</a>
+                <a href="#" class="nav-item" data-target="details-view"><i class="fa-solid fa-address-card"></i> Profiles</a>
+                <a href="#" class="nav-item" data-target="marks-view"><i class="fa-solid fa-file-pen"></i> Upload Marks</a>
+                
+                <p class="nav-section-title">MANAGEMENT</p>
+                <a href="#" class="nav-item" data-target="leaves-view"><i class="fa-solid fa-envelope-open-text"></i> Leave Requests</a>
+                <a href="#" class="nav-item" data-target="exports-view"><i class="fa-solid fa-file-export"></i> Reports & Exports</a>
+
+                <p class="nav-section-title">SUPPORT</p>
+                <a href="#" class="nav-item" data-target="feedback-view"><i class="fa-solid fa-comment-dots"></i> Feedback</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <div class="header-user" style="display: flex; align-items: center;">
+                    <button id="theme-toggle" class="btn shadow-hover" style="background:none; border:none; font-size:20px; color:var(--text-muted); margin-right:16px; padding:0" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
+                    <div class="profile-dropdown-container">
+                        <div class="user-profile-btn" onclick="toggleProfileDropdown()">
+                            <img id="header-avatar" src="" alt="Avatar" class="avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-fallback" style="display:none;"><i class="fa-solid fa-user"></i></div>
+                            <span id="header-username">Admin</span>
+                            <i class="fa-solid fa-chevron-down down-arrow"></i>
+                        </div>
+                        <div id="profile-dropdown" class="dropdown-menu fade-in">
+                            <a href="#" onclick="openModal('profile-modal'); toggleProfileDropdown();"><i class="fa-solid fa-user-pen"></i> Edit Profile</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" onclick="logout()" class="text-danger"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body wrapper">
+                
+                <section id="dashboard-view" class="view-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon students-icon"><i class="fa-solid fa-user-graduate"></i></div>
+                            <div class="stat-info">
+                                <h3>Total Students</h3>
+                                <p id="stat-total-students">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon attendance-icon"><i class="fa-solid fa-check-circle"></i></div>
+                            <div class="stat-info">
+                                <h3>Total Records</h3>
+                                <p id="stat-total-attendance">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-widgets content-split" style="margin-top: 24px;">
+                        <div class="widget-card fade-in-up">
+                            <div class="clock-display">
+                                <h2 id="live-time">00:00:00</h2>
+                                <p id="live-date">Monday, Jan 1, 2026</p>
+                            </div>
+                            <!-- V4 Calendar -->
+                            <div class="calendar-container">
+                                <div class="calendar-header">
+                                    <button onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <h4 id="calendar-month">March 2026</h4>
+                                    <button onclick="changeMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                                <div class="calendar-days-header">
+                                    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                </div>
+                                <div class="calendar-grid" id="calendar-grid"></div>
+                                <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted); text-align: center;">
+                                    <span style="color:var(--danger)">●</span> Holidays &nbsp;&nbsp; <span style="color:var(--secondary)">●</span> Events
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="widget-card fade-in-up" style="animation-delay: 0.1s;">
+                            <div class="widget-header">
+                                <h3><i class="fa-solid fa-bell"></i> Upcoming Events</h3>
+                                <button class="btn btn-sm btn-primary" onclick="openModal('add-event-modal')"><i class="fa-solid fa-plus"></i></button>
+                            </div>
+                            <div id="events-list" class="events-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="classes-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Class Schedules & Timetable (9AM - 4PM)</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary shadow-hover" onclick="openModal('add-branch-modal')"><i class="fa-solid fa-sitemap"></i> Add Branch</button>
+                            <button class="btn btn-primary shadow-hover" onclick="openModal('add-class-modal')"><i class="fa-solid fa-folder-plus"></i> Add Class</button>
+                            <button class="btn btn-primary shadow-hover" onclick="openModal('add-subject-modal')"><i class="fa-solid fa-book-medical"></i> Add Subject</button>
+                            <button class="btn btn-secondary shadow-hover" onclick="openModal('add-slot-modal')">Add Subject Slot</button>
+                        </div>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="form-group" style="max-width: 300px;">
+                            <label>Filter by Class</label>
+                            <select id="tt-class-filter" class="form-control" onchange="renderTimetable()">
+                                <option value="">Select a Class Section</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="timetable-container fade-in shadow-sm" style="background:var(--white); padding:16px; border-radius:var(--radius-md); overflow-x: auto;">
+                        <table class="data-table" id="timetable-grid" style="min-width: 800px; text-align:center;">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>09:00 AM</th>
+                                    <th>10:00 AM</th>
+                                    <th>11:00 AM</th>
+                                    <th>12:00 PM</th>
+                                    <th>01:00 PM</th>
+                                    <th>02:00 PM</th>
+                                    <th>03:00 PM</th>
+                                    <th>04:00 PM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timetable-body">
+                                <tr><td colspan="9" style="text-align:center;">Select a Class to view the schedule.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Class Summaries View -->
+                <section id="class-summary-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Aggregate Class Summaries</h2>
+                    </div>
+                    <div class="summaries-grid fade-in flex" style="display:flex; flex-wrap:wrap; gap:24px; margin-top:24px;" id="class-summary-container">
+                        <!-- Populated dynamically via app.js -->
+                    </div>
+                </section>
+
+                <section id="students-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Student Directory</h2>
+                        <button class="btn btn-primary shadow-hover" onclick="openModal('add-student-modal')">
+                            <i class="fa-solid fa-plus"></i> Add Student
+                        </button>
+                    </div>
+                    <div class="table-container fade-in">
+                        <table class="data-table" id="students-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Section</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="attendance-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Attendance Records</h2>
+                        <button class="btn btn-primary shadow-hover" onclick="openModal('mark-attendance-modal')">
+                            <i class="fa-solid fa-clipboard-check"></i> Mark Attendance
+                        </button>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="form-group">
+                            <label for="filter-student">Filter by Student</label>
+                            <select id="filter-student" class="form-control" onchange="filterAttendance()">
+                                <option value="all">All Students</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container fade-in">
+                        <table class="data-table" id="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Student Name</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="details-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Comprehensive Student Details</h2>
+                    </div>
+                    <div class="filter-bar">
+                        <div class="form-group" style="max-width: 400px;">
+                            <label for="details-select-student">Select Student</label>
+                            <select id="details-select-student" class="form-control" onchange="loadStudentDetails()">
+                                <option value="">-- Select a student --</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="student-details-card" class="details-card fade-in" style="display: none;">
+                        <div class="details-header">
+                            <div class="details-avatar"><i class="fa-solid fa-user"></i></div>
+                            <div>
+                                <h2 id="det-name">Name</h2>
+                                <p id="det-email">Email</p>
+                                <p id="det-class" style="color:var(--secondary); font-weight:bold; font-size:12px;">Class</p>
+                            </div>
+                        </div>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <p class="detail-label">Overall CGPA</p>
+                                <p class="detail-value" id="det-cgpa">-</p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="detail-label">Attendance Score</p>
+                                <p class="detail-value" id="det-att-score">-</p>
+                            </div>
+                            <div class="detail-item" style="grid-column: 1 / -1;">
+                                <p class="detail-label">Subject Marks</p>
+                                <table class="data-table" style="margin-top: 8px;">
+                                    <thead><tr><th>Subject</th><th>Marks %</th></tr></thead>
+                                    <tbody id="det-subjects-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="marks-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Upload Academic Records</h2>
+                    </div>
+                    
+                    <div class="upload-marks-container form-card fade-in">
+                        <form id="upload-marks-form">
+                            <div class="form-group">
+                                <label for="marks-student-id">Select Student</label>
+                                <select id="marks-student-id" class="form-control" required onchange="populateExistingMarks()">
+                                    <option value="">-- Select a student --</option>
+                                </select>
+                            </div>
+                            <div class="stats-grid" style="gap: 16px; margin-bottom: 0;">
+                                <div class="form-group">
+                                    <label for="marks-subject">Subject</label>
+                                    <select id="marks-subject" class="form-control" required>
+                                        <!-- populated dynamically -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="marks-score">Marks Achieved</label>
+                                    <input type="number" step="0.5" min="0" max="100" id="marks-score" class="form-control" placeholder="e.g. 85" required>
+                                </div>
+                            </div>
+                            
+                            <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border);">
+                            <h4 style="margin-bottom: 12px; color: var(--dark);">Total Metrics (Optional Update)</h4>
+                            
+                            <div class="stats-grid" style="gap: 16px; margin-bottom: 0;">
+                                <div class="form-group">
+                                    <label for="marks-cgpa">Update Overall CGPA</label>
+                                    <input type="number" step="0.01" min="0" max="10" id="marks-cgpa" class="form-control" placeholder="Leave blank to keep current">
+                                </div>
+                                <div class="form-group">
+                                    <label>Quick Attendance (Today)</label>
+                                    <div class="status-options" style="margin-top: 8px;">
+                                        <label class="radio-card present" style="padding: 8px 16px;">
+                                            <input type="radio" name="quick-att" value="PRESENT">
+                                            <span class="card-content" style="font-size:12px;"><i class="fa-solid fa-check"></i> Present</span>
+                                        </label>
+                                        <label class="radio-card absent" style="padding: 8px 16px;">
+                                            <input type="radio" name="quick-att" value="ABSENT">
+                                            <span class="card-content" style="font-size:12px;"><i class="fa-solid fa-xmark"></i> Absent</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 16px;">
+                                <label for="marks-remarks">Remarks (Updates overall student remarks)</label>
+                                <textarea id="marks-remarks" class="form-control" rows="2" placeholder="Performance remarks..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-cloud-arrow-up"></i> Submit Academic Record</button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="feedback-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Feedback Portal</h2>
+                    </div>
+                    
+                    <div class="content-split fade-in">
+                        <div class="form-card">
+                            <h3>Submit Feedback</h3>
+                            <form id="feedback-form" style="margin-top: 16px;">
+                                <div class="form-group">
+                                    <label for="fb-name">Your Name (Optional)</label>
+                                    <input type="text" id="fb-name" class="form-control" placeholder="Anonymous">
+                                </div>
+                                <div class="form-group">
+                                    <label for="fb-type">Feedback Target</label>
+                                    <select id="fb-type" class="form-control" required>
+                                        <option value="Application">Application</option>
+                                        <option value="College">College Administration</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fb-message">Your Remarks</label>
+                                    <mask-textarea id="fb-message" class="form-control" rows="4" required placeholder="Tell us what you think..."></mask-textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Feedback</button>
+                            </form>
+                        </div>
+                        
+                        <div class="feedback-list-container">
+                            <h3>Recent Feedback</h3>
+                            <div id="feedback-list" class="feedback-list" style="margin-top: 16px;"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- NEW: Leave Management View -->
+                <section id="leaves-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Student Leave Applications</h2>
+                    </div>
+                    <div class="table-container fade-in-up">
+                        <table class="data-table" id="leaves-table">
+                            <thead>
+                                <tr><th>ID</th><th>Student</th><th>Date Range</th><th>Reason</th><th>Status</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- NEW: Exports View -->
+                <section id="exports-view" class="view-section">
+                    <div class="action-bar">
+                        <h2>Data Reports & Exports</h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card" style="cursor:pointer;" onclick="exportToExcel()">
+                            <div class="stat-icon attendance-icon"><i class="fa-solid fa-file-excel"></i></div>
+                            <div class="stat-info">
+                                <h3>Excel Report</h3>
+                                <p>Download CSV</p>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="cursor:pointer;" onclick="exportToPDF()">
+                            <div class="stat-icon students-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                            <div class="stat-info">
+                                <h3>PDF Report</h3>
+                                <p>Download PDF</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- AI Floating Chatbot -->
+    <div class="ai-float-btn" onclick="toggleChat()"><i class="fa-solid fa-robot"></i></div>
+    <div id="ai-chat-window" class="ai-chat-window fade-in" style="display:none;">
+        <div class="chat-header">
+            <h4><i class="fa-solid fa-microchip"></i> Admin AI</h4>
+            <button onclick="toggleChat()" style="background:none;border:none;color:white;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <div class="msg ai-msg fade-in-up">Hello Administrator! I am integrated with our database. Ask me about defaulters or low attendance classes!</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type query..." onkeypress="if(event.key === 'Enter') sendChatQuery()">
+            <button class="btn btn-sm btn-primary" onclick="sendChatQuery()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Timetable Slot Modal -->
+    <div id="add-slot-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header">
+                <h2>Assign Class Subject Slot</h2>
+                <button class="close-btn" onclick="closeModal('add-slot-modal')">&times;</button>
+            </div>
+            <form id="add-slot-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Class Section</label>
+                        <select id="slot-class" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <select id="slot-subject" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Day of Week</label>
+                        <select id="slot-day" class="form-control" required>
+                            <option value="MONDAY">Monday</option>
+                            <option value="TUESDAY">Tuesday</option>
+                            <option value="WEDNESDAY">Wednesday</option>
+                            <option value="THURSDAY">Thursday</option>
+                            <option value="FRIDAY">Friday</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fixed Start Time</label>
+                        <select id="slot-time" class="form-control" required>
+                            <option value="09:00">09:00 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="11:00">11:00 AM</option>
+                            <option value="12:00">12:00 PM</option>
+                            <option value="13:00">01:00 PM</option>
+                            <option value="14:00">02:00 PM</option>
+                            <option value="15:00">03:00 PM</option>
+                            <option value="16:00">04:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-slot-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign Slot</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header"><h2>Manage Profile</h2><button class="close-btn" onclick="closeModal('profile-modal')">&times;</button></div>
+            <form id="profile-form">
+                <div class="modal-body">
+                    <div class="profile-pic-upload">
+                        <img id="profile-preview" src="" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2NjYyIgZD0iTTEyIDJDMi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMyMTu1MiAyIDEyIDJ6bTAgM2MxLjY2IDAgMyAxLjM0IDMgM3MtMS4zNCAzLTMgMy0zLTEuMzQtMy0zIDEuMzQtMyAzLTN6bTAgMTQuMmMtMi41IDAtNC43MS0xLjI4LTYtMy4yMi4wMy0xLjk5IDQtMy4wOCA2LTMuMDhzNS45NyAxLjA5IDYgMy4wOGMtMS4yOSAxLjk0LTMuNSAzLjIyLTYgMy4yMnoiLz48L3N2Zz4='">
+                        <label class="btn btn-sm btn-secondary" style="cursor: pointer; margin-top: 12px;">
+                            Upload Image <input type="file" id="profile-image-input" accept="image/*" style="display: none;" onchange="previewProfileImage(event)">
+                        </label>
+                        <input type="hidden" id="profile-base64">
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;"><label>Username</label><input type="text" id="profile-username" class="form-control" required></div>
+                    <div class="form-group"><label>New Password</label><input type="password" id="profile-password" class="form-control" placeholder="Leave blank to keep current"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Changes</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-student-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header"><h2>Add New Student</h2><button class="close-btn" onclick="closeModal('add-student-modal')">&times;</button></div>
+            <form id="add-student-form">
+                <div class="modal-body">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="student-name" class="form-control" required placeholder="John Doe"></div>
+                    <div class="form-group"><label>Email Address</label><input type="email" id="student-email" class="form-control" required placeholder="john@ex.com"></div>
+                    <div class="form-group"><label>Class Section</label><select id="student-class" class="form-control" required></select></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Student</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="mark-attendance-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header"><h2>Mark Attendance</h2><button class="close-btn" onclick="closeModal('mark-attendance-modal')">&times;</button></div>
+            <form id="mark-attendance-form">
+                <div class="modal-body">
+                    <div class="form-group"><label>Student</label><select id="att-student-id" class="form-control" required></select></div>
+                    <div class="form-group"><label>Subject</label><select id="att-subject-id" class="form-control" required></select></div>
+                    <div class="form-group"><label>Date</label><input type="date" id="att-date" class="form-control" required></div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <div class="status-options">
+                            <label class="radio-card present"><input type="radio" name="att-status" value="PRESENT" required><span class="card-content"><i class="fa-solid fa-check"></i> Present</span></label>
+                            <label class="radio-card absent"><input type="radio" name="att-status" value="ABSENT" required><span class="card-content"><i class="fa-solid fa-xmark"></i> Absent</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Submit Record</button></div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="add-class-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header"><h2>Add New Class Section</h2><button class="close-btn" onclick="closeModal('add-class-modal')">&times;</button></div>
+            <form id="add-class-form">
+                <div class="modal-body">
+                    <div class="form-group"><label>Class Name</label><input type="text" id="new-class-name" class="form-control" required placeholder="e.g. CSE-A"></div>
+                    <div class="form-group"><label>Branch</label> <!-- Phase 1 Branch Mapping -->
+                        <select id="new-class-branch" class="form-control" required>
+                           <option value="">Select a Branch</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Class</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-subject-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header"><h2>Add New Subject</h2><button class="close-btn" onclick="closeModal('add-subject-modal')">&times;</button></div>
+            <form id="add-subject-form">
+                <div class="modal-body">
+                    <div class="form-group"><label>Subject Name</label><input type="text" id="new-subject-name" class="form-control" required placeholder="e.g. Data Structures"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Subject</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-event-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header"><h2>Add Event</h2><button class="close-btn" onclick="closeModal('add-event-modal')">&times;</button></div>
+            <form id="add-event-form">
+                <div class="modal-body">
+                    <div class="form-group"><label>Event Title</label><input type="text" id="event-title" class="form-control" required></div>
+                    <div class="form-group"><label>Event Date</label><input type="date" id="event-date" class="form-control" required></div>
+                    <div class="form-group"><label>Description</label><textarea id="event-desc" class="form-control" rows="3"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Add Event</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Phase 1 Branch Modal -->
+    <div id="add-branch-modal" class="modal-overlay">
+        <div class="modal fade-in-up">
+            <div class="modal-header"><h2>Add New Branch</h2><button class="close-btn" onclick="closeModal('add-branch-modal')">&times;</button></div>
+            <form id="add-branch-form">
+                <div class="modal-body">
+                    <div class="form-group"><label>Branch Name</label><input type="text" id="new-branch-name" class="form-control" required placeholder="e.g. BTech"></div>
+                </div>
+                <div class="modal-footer"><button type="submit" class="btn btn-primary">Save Branch</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+    <!-- Report Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
